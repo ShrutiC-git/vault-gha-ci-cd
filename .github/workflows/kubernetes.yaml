@@ -1,0 +1,56 @@
+on:
+  push:
+    branches:
+      - main
+jobs: 
+  build: 
+    runs-on: self-hosted
+    permissions:
+      packages: write
+    steps: 
+    - name: Import Secrets
+      uses: hashicorp/vault-action@v2
+      with:
+          url: http://127.0.0.1:8200
+          tlsSkipVerify: true
+          token: ${{ secrets.VAULT_TOKEN }}
+          exportEnv: true
+          secrets: |
+            secret/data/registry registry_token | REGISTRY_TOKEN;
+            secret/data/kubeconfig kubeconfig | KUBECONFIG;
+    - name: Login to GHCR
+      uses: docker/login-action@v3
+      with: 
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ env.REGISTRY_TOKEN }}
+    - name: Build and push the Docker image
+      uses: docker/build-push-action@v3
+      with:
+        push: true
+        tags: ghcr.io/${{ github.repository }}:${{ github.sha }}
+    
+  deploy:
+    runs-on: self-hosted
+    needs: build
+    steps:
+      - name: Import Secrets
+        uses: hashicorp/vault-action@v2
+        with:
+          url: http://127.0.0.1:8200
+          tlsSkipVerify: true
+          token: ${{ secrets.VAULT_TOKEN }}
+          exportEnv: true
+          secrets: |
+            secret/data/registry token | REGISTRY_TOKEN;
+            secret/data/kubeconfig kubeconfig | KUBECONFIG;
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Configure Kubeconfig
+        uses: azure/k8s-set-context@v4
+        with:
+          method: kubeconfig
+          kubeconfig: ${{ env.KUBECONFIG }}  
+      - name: Deploy the Helm chart
+        run: |
+          helm upgrade --install node-js-app ./helm --create-namespace --namespace ${{ github.event.repository.name }} --set image=ghcr.io/${{ github.repository }}/${{ github.sha }} --set dockerConfigJson.data='\{\"auths\":\{\"ghcr.io\":\{\"username\":\"${{ github.actor }}\"\,\"password\":\"${{ env.REGISTRY_TOKEN }}\"\}\}\}'

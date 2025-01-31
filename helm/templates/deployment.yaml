@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata: 
+    name: {{.Release.Namespace}}
+    namespace: {{.Release.Namespace}}
+spec: 
+    replicas: 3
+    selector: 
+        matchLabels: 
+            app: {{.Release.Namespace}}
+    template:
+        metadata:
+            labels:
+                app: {{ .Release.Namespace }}
+        spec:
+            containers:
+                - name: app
+                  image: {{ .Values.image | required "image is required "}}
+                  ports:
+                    - name: app-port
+                      containerPort: {{ .Values.containerPort }}
+            imagePullSecrets:
+                - name: {{ .Values.dockerConfigJson.secretName }}    
