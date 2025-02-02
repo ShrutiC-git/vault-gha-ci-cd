@@ -16,8 +16,8 @@ jobs:
           token: ${{ secrets.VAULT_TOKEN }}
           exportEnv: true
           secrets: |
-            secret/data/registry registry_token | REGISTRY_TOKEN;
-            secret/data/kubeconfig kubeconfig | KUBECONFIG;
+            secret/data/token registry_token | REGISTRY_TOKEN;
+            secret/data/config kubeconfig | KUBECONFIG;
     - name: Login to GHCR
       uses: docker/login-action@v3
       with: 
@@ -42,8 +42,8 @@ jobs:
           token: ${{ secrets.VAULT_TOKEN }}
           exportEnv: true
           secrets: |
-            secret/data/registry token | REGISTRY_TOKEN;
-            secret/data/kubeconfig kubeconfig | KUBECONFIG;
+            secret/data/token token | REGISTRY_TOKEN;
+            secret/data/config kubeconfig | KUBECONFIG;
       - name: Checkout repository
         uses: actions/checkout@v4
       - name: Configure Kubeconfig
