@@ -1,2 +1,0 @@
-# Principle of Least Privilege
-

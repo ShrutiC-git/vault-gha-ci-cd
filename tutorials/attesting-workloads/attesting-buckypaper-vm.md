@@ -1,2 +1,0 @@
-# Attesting Buckypaper VM
-
