@@ -1,2 +1,0 @@
-# Attesting Serverless Functions
-
